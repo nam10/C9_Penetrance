@@ -1,0 +1,97 @@
+#Load R packages
+library(survival)
+library(prodlim)
+
+#Read data into R
+data <- read.csv("C9_data.csv", header = TRUE, sep = ",", strip.white = TRUE)
+
+#Print overall penetrance summaries
+SurvObj <- with(data, Surv(AgeofOnset, Event == 1, type = c("right")))
+km.by.all <- survfit(formula = SurvObj ~ 1, data = data)
+print(km.by.all, digits = 0)
+print(survfit(SurvObj ~ 1), digits = c(3), rmean = "common")
+summary(survfit(SurvObj ~ 1), times = c(1:93), extend = TRUE)
+
+#Plot overall survival curve
+km0 <- prodlim(Surv(AgeofOnset, Event == 1) ~ 1, data = data)
+par(las = 1)
+plot(km0, type = c("cuminc"), marktime = TRUE, lwd = c(1), xlab = "Age of Onset (years)")
+
+#Create model data
+set.seed(3510)
+SampleID <- c(paste("RAN", sample(0:293, 293, replace = FALSE), sep = "."))
+Sex <- c(NA)
+AgeofOnset <- c(sample(25:91, 293, replace = TRUE))
+Diagnosis <- c("Control")
+Event <- c(0)
+SiteofOnset <- c(NA)
+SporadicvFamilial <- c(NA)
+Country <- c(NA)
+model <- data.frame(SampleID, Sex, AgeofOnset, Diagnosis, Event, SiteofOnset, SporadicvFamilial, Country)
+data.model <- rbind(data, model)
+
+#Print model penetrance data
+SurvObj.model <- with(data.model, Surv(AgeofOnset, Event == 1, type = c("right")))
+km.by.model <- survfit(formula = SurvObj.model ~ 1, data = data.model)
+print(km.by.model, digits = c(3), rmean = "common")
+summary(survfit(SurvObj.model ~ 1), times = c(1:93), extend = TRUE)
+
+#Plot model survival curve
+km1 <- prodlim(Surv(AgeofOnset, Event == 1) ~ 1, data = data.model)
+plot(km1, type = c("cuminc"), marktime = TRUE, lwd = c(1), col = c("red"), xlab = "Age of Onset (years)")
+
+#Print SALS v FALS penetrance data
+SurvObj <- with(data, Surv(AgeofOnset, Event == 1, type = c("right")))
+km.by.type <- survfit(formula = SurvObj ~ SporadicvFamilial, data = data, conf.type = "log-log")
+print(km.by.type, digits = c(3), rmean = "common")
+
+#Plot survival curve of SALS v FALS
+km.type <- prodlim(Surv(AgeofOnset, Event == 1) ~ SporadicvFamilial, data = data)
+par(las = 1)
+plot(km.type, type = c("cuminc"), marktime = TRUE, lwd = c(1), col = c("black", "orangered"), xlim = c(0, 85), xlab = "Age of Onset (years)", legend = FALSE, atrisk = FALSE)
+legend(10, 1.0, legend = c("Familial, n=555", "Sporadic, n=544"), col = c("black", "orangered"), lty = c(1, 1), lwd = c(1, 1))
+
+#Print ALS v FTD penetrance data
+SurvObj.ALS <- with(subset(data, Diagnosis == "ALS"), Surv(AgeofOnset, Event == 1, type = c("right")))
+SurvObj.FTD <- with(subset(data, Diagnosis == "FTD"), Surv(AgeofOnset, Event == 1, type = c("right")))
+km.by.ALS <- survfit(formula = SurvObj.ALS ~ 1, data = data)
+km.by.FTD <- survfit(formula = SurvObj.FTD ~ 1, data = data)
+print(km.by.ALS, digits = c(3), rmean = "common")
+print(km.by.FTD, digits = c(3), rmean = "common")
+
+#Plot survival curve of ALS v FTD
+km.ALS <- prodlim(Surv(AgeofOnset, Event == 1) ~ 1, data = subset(data, Diagnosis == "ALS"))
+km.FTD <- prodlim(Surv(AgeofOnset, Event == 1) ~ 1, data = subset(data, Diagnosis == "FTD"))
+par(las = 1)
+plot(km.ALS, type = c("cuminc"), marktime = TRUE, lwd = c(1), col = c("black"), xlim = c(0, 85), xlab = "Age of Onset (years)", legend = FALSE, atrisk = FALSE)
+par(new = TRUE)
+plot(km.FTD, type = c("cuminc"), marktime = TRUE, lwd = c(1), col = c("darkgreen"), xlim = c(0, 85), xlab = "Age of Onset (years)", background = FALSE, atrisk = FALSE)
+legend(10, 1.0, legend = c("ALS, n=734", "FTD, n=303"), col = c("black", "darkgreen"), lty = c(1, 1), lwd = c(1, 1))
+
+#Print males v females penetrance data
+SurvObj <- with(data, Surv(AgeofOnset, Event == 1, type = c("right")))
+km.by.sex <- survfit(formula = SurvObj ~ Sex, data = data)
+print(km.by.sex, digits = c(3), rmean = "common")
+
+#Plot survival curve of males v females
+km.sex <- prodlim(Surv(AgeofOnset, Event == 1) ~ Sex, data = data)
+par(las = 1)
+plot(km.sex, type = c("cuminc"), marktime = TRUE, lwd = c(1), col = c("red", "blue"), xlim = c(0, 90), xlab = "Age of Onset (years)", legend = FALSE, atrisk = FALSE)
+legend(10, 1.0, legend = c("Female, n=543", "Male, n=612"), col = c("red", "blue"), lty = c(1, 1), lwd = c(1, 1))
+
+#Print bulbar v spinal penetrance data
+SurvObj.Bulbar <- with(subset(data, SiteofOnset == "Bulbar" | SiteofOnset == "General"), Surv(AgeofOnset, Event == 1, type = c("right")))
+SurvObj.Spinal <- with(subset(data, SiteofOnset == "Spinal"), Surv(AgeofOnset, Event == 1, type = c("right")))
+km.by.bulbar <- survfit(formula = SurvObj.Bulbar ~ 1, data = data)
+km.by.spinal <- survfit(formula = SurvObj.Spinal ~ 1, data = data)
+print(km.by.bulbar, digits = c(3), rmean = "common")
+print(km.by.spinal, digits = c(3), rmean = "common")
+
+#Plot survival curve of bulbar v spinal
+km.bulbar <- prodlim(Surv(AgeofOnset, Event == 1) ~ 1, data = subset(data, SiteofOnset == "Bulbar" | SiteofOnset == "General"))
+km.spinal <- prodlim(Surv(AgeofOnset, Event == 1) ~ 1, data = subset(data, SiteofOnset == "Spinal"))
+par(las = 1)
+plot(km.bulbar, type = c("cuminc"), marktime = TRUE, lwd = c(1), col = c("black"), xlim = c(0, 85), xlab = "Age of Onset (years)", legend = FALSE, atrisk = FALSE)
+par(new = TRUE)
+plot(km.spinal, type = c("cuminc"), marktime = TRUE, lwd = c(1), col = c("purple"), xlim = c(0, 85), xlab = "Age of Onset (years)", background = FALSE, atrisk = FALSE)
+legend(10, 1.0, legend = c("Bulbar, n=270", "Spinal, n=481"), col = c("black", "purple"), lty = c(1, 1), lwd = c(1, 1))
