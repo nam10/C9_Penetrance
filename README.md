@@ -1,4 +1,4 @@
-<i>Freely available code that was used in our C9ORF72 Penetrance paper, detailing how to replicate the survival curve analyses.
+<i>Freely available code that was used in our C9ORF72 Penetrance paper, detailing how to replicate the survival curve analyses.<i>
 
 To use, save the C9_data CSV file to your working directory and then run the code. The C9_Penetrance code will output the Kaplan-Meier survival curve data and plots and density plots used in the paper.
 
